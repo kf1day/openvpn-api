@@ -1,0 +1,17 @@
+client
+remote-cert-tls server
+proto udp
+dev tun
+auth-nocache
+remote vpn0.domain.tld 12345
+remote vpn1.domain.tld 13579
+cipher AES-256-CBC
+verb 3
+mute 20
+keepalive 10 120
+comp-lzo
+persist-key
+persist-tun
+float
+resolv-retry infinite
+nobind

@@ -1,0 +1,5 @@
+CA_DIR="/etc/openvpn/server"
+ADMIN_PORT="1195"
+CERT_SUBJECT="/C=RU/ST=ru/L=Moscow/O=THE LLC"
+MAIL_DOMAIN="domain.tld"
+DEFAULT_DAYS=365
