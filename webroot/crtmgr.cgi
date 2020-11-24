@@ -53,37 +53,27 @@ openssl_cnf() {
 }
 
 err_400() {
-	echo "Status: 400 Bad Request"
-	echo "Content-Type: text/plain; charset=utf-8"
-	echo
+	printf "Status: 400 Bad Request\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 	echo "Bad Request"
 	exit
 }
 err_404() {
-	echo "Status: 404 Not Found"
-	echo "Content-Type: text/plain; charset=utf-8"
-	echo
+	printf "Status: 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 	echo "Not Found"
 	exit
 }
 err_405() {
-	echo "Status: 405 Method Not Allowed"
-	echo "Content-Type: text/plain; charset=utf-8"
-	echo
+	printf "Status: 405 Method Not Allowed\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 	echo "Method Not Allowed"
 	exit
 }
 err_409() {
-	echo "Status: 409 Conflict"
-	echo "Content-Type: text/plain; charset=utf-8"
-	echo
+	printf "Status: 409 Conflict\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 	echo "Conflict"
 	exit
 }
 err_500() {
-	echo "Status: 500 Internal Server Error"
-	echo "Content-Type: text/plain; charset=utf-8"
-	echo
+	printf "Status: 500 Internal Server Error\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 	echo "Error: Missing private key: $1"
 	exit
 }
@@ -93,9 +83,7 @@ if [ -z "${PATH_INFO}" ]; then
 fi
 if [ "${PATH_INFO}" = "/" ]; then
 	if [ "${REQUEST_METHOD}" = "GET" ]; then
-		echo "Status: 200 OK"
-		echo "Content-Type: application/json; charset=utf-8"
-		echo
+		printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
 		ls -1 "${DIR}/cert/"*".crt" | do_list
 		exit
 	fi
@@ -119,12 +107,11 @@ fi
 
 if [ "${REQUEST_METHOD}" = "GET" ]; then
 	if [ "${STATE}" = "0" ]; then
-		echo "Status: 200 OK"
-		echo "Content-Type: text/plain; charset=utf-8"
+		printf "Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n"
 		if [ "${QUERY_STRING}" = "dl" ]; then
-			echo "Content-Disposition: attachment; filename=${CRT_ID}.ovpn"
+			printf "Content-Disposition: attachment; filename=${CRT_ID}.ovpn\r\n"
 		fi
-		echo
+		printf "\r\n"
 		do_export "${CRT_ID}"
 		exit
 	else
@@ -133,9 +120,7 @@ if [ "${REQUEST_METHOD}" = "GET" ]; then
 fi
 
 if [ "${REQUEST_METHOD}" = "POST" ]; then
-	echo "Status: 200 OK"
-	echo "Content-Type: text/plain; charset=utf-8"
-	echo
+	printf "Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 	if [ "${STATE}" = "0" ]; then
 		mv "${DIR}/cert/${CRT_ID}.crt" "${DIR}/cert/${CRT_ID}.${NOW}.bak"
 	fi
@@ -151,9 +136,7 @@ if [ "${REQUEST_METHOD}" = "PUT" ]; then
 	if [ "${STATE}" = "2" ]; then
 		err_404
 	else
-		echo "Status: 200 OK"
-		echo "Content-Type: text/plain; charset=utf-8"
-		echo
+		printf "Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 		if [ "${STATE}" = "0" ]; then
 			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CRT_ID}.crt"
 			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${CA_DIR}/revoke.crl"
@@ -169,9 +152,7 @@ if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 	if [ "${STATE}" = "2" ]; then
 		err_404
 	else
-		echo "Status: 200 OK"
-		echo "Content-Type: text/plain; charset=utf-8"
-		echo
+		printf "Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
 		if [ "${STATE}" = "0" ]; then
 			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CRT_ID}.crt"
 			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${CA_DIR}/revoke.crl"
