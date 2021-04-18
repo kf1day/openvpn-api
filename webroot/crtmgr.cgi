@@ -3,17 +3,7 @@
 NOW="`date +%s`"
 DIR="`dirname $0`/.."
 . "${DIR}/vars.conf"
-
-
-do_list() {
-	local l f n
-	l=`echo status 2 | nc 127.0.0.1 ${ADMIN_PORT} -q1 | sed -ne '/^ROUTING_TABLE,/{s///;s/,/ /;s/,.*//;p}'`
-	printf '{'
-	while read f; do
-		n=`basename $f '.crt'`
-		( echo $n; cat $f | openssl x509 -dates -noout | sed 's/.*=//' | xargs -L1 -i -- date -d"{}" +'%s'; echo $l' ' | sed 's/ '$n' .*//;s/.* //' ) | xargs printf '"%s":[%s,%s,"%s"],'
-	done | sed '$s/,$/}\n/'
-}
+. "${DIR}/http.inc"
 
 do_export() {
 	cat "${DIR}/export.conf"
@@ -52,43 +42,11 @@ openssl_cnf() {
 	echo "default_crl_days = 730"
 }
 
-err_400() {
-	printf "Status: 400 Bad Request\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-	echo "Bad Request"
-	exit
-}
-err_404() {
-	printf "Status: 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-	echo "Not Found"
-	exit
-}
-err_405() {
-	printf "Status: 405 Method Not Allowed\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-	echo "Method Not Allowed"
-	exit
-}
-err_409() {
-	printf "Status: 409 Conflict\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-	echo "Conflict"
-	exit
-}
-err_500() {
-	printf "Status: 500 Internal Server Error\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-	echo "Error: Missing private key: $1"
-	exit
-}
 
-if [ -z "${PATH_INFO}" ]; then
+if [ -z "${PATH_INFO}" ] || [ "${PATH_INFO}" = "/" ]; then
 	err_400
 fi
-if [ "${PATH_INFO}" = "/" ]; then
-	if [ "${REQUEST_METHOD}" = "GET" ]; then
-		printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
-		ls -1 "${DIR}/cert/"*".crt" | do_list
-		exit
-	fi
-	err_405
-fi
+
 
 CRT_ID=`basename "${PATH_INFO}"`
 if [ -r "${DIR}/cert/${CRT_ID}.key" ]; then
