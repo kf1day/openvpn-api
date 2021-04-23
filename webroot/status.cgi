@@ -1,7 +1,8 @@
 #!/bin/sh
 
 NOW="`date +%s`"
-DIR="`dirname $0`/.."
+RUN="`dirname ${SCRIPT_FILENAME}`"
+DIR="`dirname ${RUN}`"
 . "${DIR}/vars.conf"
 . "${DIR}/http.inc"
 
@@ -12,13 +13,9 @@ do_list() {
 	printf '{'
 	while read f; do
 		n=`basename $f '.crt'`
-		printf \"$n\"':[%s,%s,"%s"],' `openssl x509 -dates -noout -in $f | cut -d'=' -f2 | date -f- +'%s'; echo $l' ' | sed 's/ '$n' .*//;s/.* //'`
+		printf \"$n\"':[%s,%s,"%s"],' `openssl x509 -dates -noout -in $f | cut -d'=' -f2 | date -f- +'%s'; echo $l' ' | sed -e 's/ '$n' .*//;s/.* //'`
 	done | sed '$s/,$/}/'
 }
-
-if [ -z "${PATH_INFO}" ]; then
-	err_400
-fi
 
 if [ "${REQUEST_METHOD}" = "GET" ]; then
 	printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"

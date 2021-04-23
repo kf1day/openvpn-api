@@ -1,7 +1,8 @@
 #!/bin/sh
 
 NOW="`date +%s`"
-DIR="`dirname $0`/.."
+RUN="`dirname ${SCRIPT_FILENAME}`"
+DIR="`dirname ${RUN}`"
 . "${DIR}/vars.conf"
 . "${DIR}/http.inc"
 
