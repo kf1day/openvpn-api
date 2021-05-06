@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>OpenVPN Admin</title>
+<style type="text/css">
+a {
+	color: inherit;
+	font: inherit;
+	text-decoration: none;
+}
+a:hover {
+	color: #06c;
+}
+body {
+	color: #222;
+	font: 500 12pt/20px Calibri, sans-serif;
+}
+table {
+	table-layout: fixed;
+	border-collapse: collapse;
+	width: 100%;
+	-border: 1px solid #ccc;
+}
+td {
+	border: 1px solid #ccc;
+	padding: 5px 10px;
+}
+tr:hover > td {
+	background: #cfa;
+}
+</style>
+</head>
+<body>
+<table id="t0">
+<colgroup>
+</colgroup>
+</table>
+</body>
+<script type="text/javascript">
+var t0 = document.getElementById( 't0' );
+fetch( '/status.cgi' )
+ .then( r => r.json() )
+ .then( r => {
+	for( let i in r ) {
+		let row = t0.insertRow();
+		row.insertCell().innerHTML = i;
+		row.insertCell().innerHTML= r[i][2];
+		row.insertCell().innerHTML= '<a href="/crtmgr.cgi/' + i + '?dl">Скачать</a>';
+		row.insertCell().innerHTML= '<a href="/usrctl.cgi/' + i + '">Сбросить</a>';
+	}
+ } );
+
+
+</script>
+</html>
