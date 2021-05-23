@@ -23,3 +23,14 @@ err_500() {
 	echo "Error: Missing private key: $1"
 	exit
 }
+
+QUERY_STRING="`echo $QUERY_STRING | sed 's/&/\n/g'`"
+while IFS='=' read key val; do
+	key="`echo $key | sed 's/;/_/g;s/%20//g;s/.*/\U&/'`"
+	val="`echo $val | sed 's/%20/ /g;s/%22/"/g'`"
+	eval GET_$key='$val'
+done <<EOF
+${QUERY_STRING}
+EOF
+
+unset QUERY_STRING key val
