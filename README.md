@@ -29,6 +29,6 @@ user=www-data
 nochroot
 
 data_dir=/var/www/openvpn-api/webroot
-cgipat=*.cgi
+cgipat=**.cgi
 charset=utf-8
 ```
