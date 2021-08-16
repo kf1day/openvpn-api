@@ -1,8 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+
+<!doctype html>
+<html lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <title>OpenVPN Admin</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style type="text/css">
 a {
 	color: inherit;
@@ -20,34 +23,158 @@ table {
 	table-layout: fixed;
 	border-collapse: collapse;
 	width: 100%;
-	-border: 1px solid #ccc;
+}
+th {
+	text-align: left;
+	padding: 5px 10px;
 }
 td {
-	border: 1px solid #ccc;
+	border: solid #ddd;
+	border-width: 1px 0;
 	padding: 5px 10px;
 }
 tr:hover > td {
-	background: #cfa;
+	background-color: #ffa;
 }
 </style>
 </head>
 <body>
-<table id="t0">
+<h2>OpenVPN admin</h2>
+<table id="t0" width="100%">
 <colgroup>
+<col>
+<col>
+<col width="25%">
+<col>
+<col>
+<col width="25%">
+<col>
 </colgroup>
+<thead>
+<tr>
+<th>Login</th>
+<th>Get</th>
+<th>Xtra</th>
+<th>IP</th>
+<th>Time</th>
+<th>TX / RX</th>
+<th>Control</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
 </table>
 </body>
+
 <script type="text/javascript">
 var t0 = document.getElementById( 't0' );
-fetch( '/status.cgi' )
- .then( r => r.json() )
- .then( r => {
+var now = Math.floor( new Date().getTime() / 1000 );
+
+fetch( '/user.cgi/' )
+.then( r => r.json() )
+.then( r => {
 	for( let i in r ) {
-		let row = t0.insertRow();
-		row.insertCell().innerHTML = i;
-		row.insertCell().innerHTML= r[i][2];
-		row.insertCell().innerHTML= '<a href="/crtmgr.cgi/' + i + '?dl">Скачать</a>';
-		row.insertCell().innerHTML= '<a href="/usrctl.cgi/' + i + '">Сбросить</a>';
+		let row = t0.tBodies[0].insertRow();
+		let el;
+		for ( let j = 0; j < 7; j++ ) row.insertCell();
+		
+		el = document.createElement('div');
+		el.innerHTML = i;
+		row.cells[0].appendChild( el );
+		
+		el = document.createElement('a');
+		el.href = '/cert.cgi/' + i;
+		el.download = i + '.ovpn';
+		el.innerHTML = 'Download';
+		row.cells[1].appendChild( el );
+
+		//el = document.createElement('span');
+		//row.cells[2].appendChild( el );
+
+		var link1 = document.createElement('a');
+		link1.href = '#/cert.cgi/' + i;
+		//link1.download = i + '.ovpn';
+		link1.innerHTML = 'Update';
+		
+		link1.addEventListener( 'click', function (e) {
+			console.log(e);
+			e.preventDefault();
+			return false;
+		} );
+
+		row.cells[2].appendChild( link1 );
+		/*link_upd.addEventListener( 'click', e => {
+			if ( window.confirm( 'About to update cert "' + i + '". Confirm?' ) ) {
+				fetch( '/cert.cgi/' + i, { method: 'POST' } );
+			}
+			console.log(e);
+			e.preventDefault();
+			return false;
+		} );*/
+
+
+		row.cells[2].innerHTML += ' | ';
+
+		let link_rnw = document.createElement('a');
+		link_rnw.href = '/cert.cgi/' + i;
+		link_rnw.download = i + '.ovpn';
+		link_rnw.innerHTML = 'Renew';
+		row.cells[2].appendChild( link_rnw );
+
+		row.cells[2].innerHTML += ' | ';
+
+		let link_del = document.createElement('a');
+		link_del.href = '/cert.cgi/' + i;
+		link_del.download = i + '.ovpn';
+		link_del.innerHTML = 'Revoke';
+		row.cells[2].appendChild( link_del );
+
+		for( let j in r[i] ) {
+			let time = now - r[i][j].time;
+			let unit = 'second';
+			let tx = Math.round( Math.log( r[i][j].tx / 1000000 + 1 ) * 10 );
+			let rx = Math.round( Math.log( r[i][j].rx / 1000000 + 1 ) * 10 );
+			
+			el = document.createElement('span');
+			el.innerHTML = r[i][j].ip;
+			row.cells[3].appendChild( el );
+			
+			[[60,'minute'], [60,'hour'], [24,'day']].every( t => {
+				if ( time > t[0] ) {
+					time = Math.round( time / t[0] );
+					unit = t[1];
+					return true;
+				}
+			} );
+			if ( time !== 1 ) unit += 's';
+			row.cells[4].innerHTML = time + ' ' + unit;
+			
+			unit = 'b';
+			['K', 'M', 'G'].every( t => {
+				if ( ( r[i][j].tx > 1024 ) && ( r[i][j].rx > 1024 ) ) {
+					r[i][j].tx = Math.round( r[i][j].tx / 1024 );
+					r[i][j].rx = Math.round( r[i][j].rx / 1024 );
+					unit = t;
+					return true;
+				}
+			});
+			row.cells[5].style = 'background-image: url(/admin/progress.cgi?tx=' + tx + '&rx=' + rx + ');';
+			row.cells[5].title = r[i][j].tx + unit + ' / ' + r[i][j].rx + unit;
+			
+			el = document.createElement('a');
+			el.href = '/user.cgi/' + j;
+			el.innerHTML = 'Kick';
+			el.addEventListener( 'click', e => {
+				if ( window.confirm( 'About to kick user "' + i + '". Confirm?' ) ) {
+					fetch( '/user.cgi/' + j, { method: 'DELETE' } );
+				}
+				e.preventDefault();
+				return false;
+			} );
+			row.cells[6].appendChild( el );
+
+			break;
+		}
 	}
  } );
 
