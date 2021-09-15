@@ -88,46 +88,36 @@ fetch( '/user.cgi/' )
 		el.innerHTML = 'Download';
 		row.cells[1].appendChild( el );
 
-		//el = document.createElement('span');
-		//row.cells[2].appendChild( el );
-
-		var link1 = document.createElement('a');
-		link1.href = '#/cert.cgi/' + i;
+		el = document.createElement('a');
+		el.href = '/cert.cgi/' + i;
 		//link1.download = i + '.ovpn';
-		link1.innerHTML = 'Update';
+		el.innerHTML = 'Update';
 		
-		link1.addEventListener( 'click', function (e) {
-			console.log(e);
-			e.preventDefault();
-			return false;
-		} );
-
-		row.cells[2].appendChild( link1 );
-		/*link_upd.addEventListener( 'click', e => {
+		el.addEventListener( 'click', e => {
 			if ( window.confirm( 'About to update cert "' + i + '". Confirm?' ) ) {
 				fetch( '/cert.cgi/' + i, { method: 'POST' } );
 			}
-			console.log(e);
 			e.preventDefault();
 			return false;
-		} );*/
+		} );
+		row.cells[2].appendChild( el );
+
+		el = document.createElement('span');
+		el.innerHTML = ' | ';
+		row.cells[2].appendChild( el );
+
+		el = document.createElement('a');
+		el.href = '/cert.cgi/' + i;
+		el.innerHTML = 'Renew';
+		row.cells[2].appendChild( el );
 
 
-		row.cells[2].innerHTML += ' | ';
-
-		let link_rnw = document.createElement('a');
-		link_rnw.href = '/cert.cgi/' + i;
-		link_rnw.download = i + '.ovpn';
-		link_rnw.innerHTML = 'Renew';
-		row.cells[2].appendChild( link_rnw );
-
-		row.cells[2].innerHTML += ' | ';
-
+		/*
 		let link_del = document.createElement('a');
 		link_del.href = '/cert.cgi/' + i;
 		link_del.download = i + '.ovpn';
 		link_del.innerHTML = 'Revoke';
-		row.cells[2].appendChild( link_del );
+		row.cells[2].appendChild( link_del );*/
 
 		for( let j in r[i] ) {
 			let time = now - r[i][j].time;

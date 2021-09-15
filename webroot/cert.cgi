@@ -101,7 +101,7 @@ if [ "${REQUEST_METHOD}" = "POST" ]; then
 		mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
 	fi
 	if [ "${STATE}" = "2" ]; then
-		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 | openssl x509 -req -CA "${OPENVPN_CA_DIR}/ca.crt" -CAkey "${OPENVPN_CA_DIR}/ca.key" -CAserial "${OPENVPN_CA_DIR}/ca.srl" -out "${DIR}/cert/${CERT_ID}.crt" -days ${CERT_DEFAULT_DAYS} -sha512 2> /dev/null
+		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA_DIR}/ca.crt" -CAkey "${OPENVPN_CA_DIR}/ca.key" -CAserial "${OPENVPN_CA_DIR}/ca.srl" -out "${DIR}/cert/${CERT_ID}.crt" -days ${CERT_DEFAULT_DAYS} -sha512 2> /dev/null
 	else
 		openssl req -new -key "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 | openssl x509 -req -CA "${OPENVPN_CA_DIR}/ca.crt" -CAkey "${OPENVPN_CA_DIR}/ca.key" -CAserial "${OPENVPN_CA_DIR}/ca.srl" -out "${DIR}/cert/${CERT_ID}.crt" -days ${CERT_DEFAULT_DAYS} -sha512 2> /dev/null
 	fi
