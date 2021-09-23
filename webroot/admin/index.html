@@ -36,6 +36,14 @@ td {
 tr:hover > td {
 	background-color: #ffa;
 }
+.crit {
+	color: #828282;
+	background-color: #f2f2f2;
+}
+.warn {
+	color: #ec8b13;
+	background-color: #f7efde;
+}
 </style>
 </head>
 <body>
@@ -59,6 +67,7 @@ tr:hover > td {
 <th>Time</th>
 <th>TX / RX</th>
 <th>Control</th>
+<th>Validity</th>
 </tr>
 </thead>
 <tbody>
@@ -68,15 +77,31 @@ tr:hover > td {
 
 <script type="text/javascript">
 var t0 = document.getElementById( 't0' );
-var now = Math.floor( new Date().getTime() / 1000 );
+
+function setValidity( row, timestamp ) {
+	let val = new Date( timestamp * 1000 );
+	row.cells[7].innerHTML = [ new String( val.getFullYear() ), new String( val.getMonth() + 101 ).substring( 1 ), new String( val.getDate() + 100 ).substring( 1 ) ].join( '-' );
+	val = val.getTime() - Date.now();
+	if ( val < 0 ) {
+		row.className = 'crit';
+	} else if ( val < 7000 * 86400 ) {
+		row.className = 'warn';
+	} else {
+		row.className = '';
+	}
+
+}
 
 fetch( '/user.cgi/' )
 .then( r => r.json() )
 .then( r => {
-	for( let i in r ) {
+	let now = Math.floor( Date.now() / 1000 );
+	let el;
+	for ( let i in r ) {
 		let row = t0.tBodies[0].insertRow();
-		let el;
-		for ( let j = 0; j < 7; j++ ) row.insertCell();
+		for ( let j = 0; j < 8; j++ ) row.insertCell();
+		
+		row.dataset.name = i;
 		
 		el = document.createElement('div');
 		el.innerHTML = i;
@@ -90,12 +115,15 @@ fetch( '/user.cgi/' )
 
 		el = document.createElement('a');
 		el.href = '/cert.cgi/' + i;
-		//link1.download = i + '.ovpn';
 		el.innerHTML = 'Update';
 		
 		el.addEventListener( 'click', e => {
 			if ( window.confirm( 'About to update cert "' + i + '". Confirm?' ) ) {
-				fetch( '/cert.cgi/' + i, { method: 'POST' } );
+				fetch( '/cert.cgi/' + i, { method: 'POST' } )
+				.then( r => r.json() )
+				.then( r => {
+					setValidity( row, r[1] );
+				} );
 			}
 			e.preventDefault();
 			return false;
@@ -112,14 +140,7 @@ fetch( '/user.cgi/' )
 		row.cells[2].appendChild( el );
 
 
-		/*
-		let link_del = document.createElement('a');
-		link_del.href = '/cert.cgi/' + i;
-		link_del.download = i + '.ovpn';
-		link_del.innerHTML = 'Revoke';
-		row.cells[2].appendChild( link_del );*/
-
-		for( let j in r[i] ) {
+		for ( let j in r[i] ) {
 			let time = now - r[i][j].time;
 			let unit = 'second';
 			let tx = Math.round( Math.log( r[i][j].tx / 1000000 + 1 ) * 10 );
@@ -166,6 +187,18 @@ fetch( '/user.cgi/' )
 			break;
 		}
 	}
+	fetch( '/cert.cgi/' )
+	.then( r => r.json() )
+	.then( r => {
+		let j = 0;
+		let el;
+		for ( let i in r ) {
+			if ( t0.tBodies[0].rows[j].dataset.name == i ) {
+				setValidity( t0.tBodies[0].rows[j], r[i][1] );
+			}
+			j++;
+		}
+	} );
  } );
 
 
