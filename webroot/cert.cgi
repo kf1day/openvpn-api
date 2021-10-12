@@ -19,8 +19,7 @@ fi
 
 
 do_list() {
-	local l f n
-	l="`echo status 2 | nc 127.0.0.1 ${OPENVPN_ADMIN_PORT} -q1 | sed -ne '/^CLIENT_LIST,/{s///;s/,.*//;p}'`"
+	local f n
 	printf '{'
 	while read f; do
 		n="`basename $f '.crt'`"
