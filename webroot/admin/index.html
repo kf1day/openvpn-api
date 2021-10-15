@@ -102,10 +102,9 @@ a0.addEventListener( 'click', e => {
 		fetch( '/cert.cgi/' + v, { method: 'POST' } )
 		.then( r => r.json() )
 		.then( r => {
-			setValidity( row, r[1] );
+			location.reload();
 		} );
 	}
-	location.reload();
 	e.preventDefault();
 	return false;
 } );
