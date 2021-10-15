@@ -18,6 +18,21 @@ body {
 	color: #222;
 	font: 500 12pt/20px Calibri, sans-serif;
 }
+body > div {
+	padding: 5px;
+}
+body > div > a {
+	color: #cce5ff;
+	background-color: #2966a3;
+	display: inline-block;
+	text-align: center;
+	padding: 5px;
+	width: 8.3%;
+}
+body > div > a:hover {
+	color: #fff;
+	background-color: #337fcc;
+}
 table {
 	table-layout: fixed;
 	border-collapse: collapse;
@@ -43,10 +58,12 @@ tr:hover > td {
 	color: #ec8b13;
 	background-color: #f7efde;
 }
+
 </style>
 </head>
 <body>
 <h2>OpenVPN admin</h2>
+<div><a id="a0" href="#new">Add new</a></div>
 <table id="t0" width="100%">
 <colgroup>
 <col>
@@ -55,6 +72,7 @@ tr:hover > td {
 <col>
 <col>
 <col width="25%">
+<col>
 <col>
 </colgroup>
 <thead>
@@ -75,7 +93,22 @@ tr:hover > td {
 </body>
 
 <script type="text/javascript">
+var a0 = document.getElementById( 'a0' );
 var t0 = document.getElementById( 't0' );
+
+a0.addEventListener( 'click', e => {
+	let v = window.prompt( 'Enter certificate CN', '' );
+	if ( v ) {
+		fetch( '/cert.cgi/' + v, { method: 'POST' } )
+		.then( r => r.json() )
+		.then( r => {
+			setValidity( row, r[1] );
+		} );
+	}
+	location.reload();
+	e.preventDefault();
+	return false;
+} );
 
 function setValidity( row, timestamp ) {
 	let val = new Date( timestamp * 1000 );
