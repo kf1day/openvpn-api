@@ -62,7 +62,7 @@ openssl_cnf() {
 
 	echo "default_md = sha1"
 	echo "default_days = $D"
-	echo "default_crl_days = 730"
+	echo "default_crl_days = ${CERT_DEFAULT_DAYS}"
 }
 
 
@@ -77,14 +77,14 @@ fi
 
 
 CERT_ID="`basename "${PATH_INFO}"`"
-if [ -r "${DIR}/cert/${CERT_ID}.key" ]; then
-	if [ -r "${DIR}/cert/${CERT_ID}.crt" ]; then
+if [ -f "${DIR}/cert/${CERT_ID}.key" ]; then
+	if [ -f "${DIR}/cert/${CERT_ID}.crt" ]; then
 		STATE=0
 	else
 		STATE=1
 	fi
 else
-	if [ -r "${DIR}/cert/${CERT_ID}.crt" ]; then
+	if [ -f "${DIR}/cert/${CERT_ID}.crt" ]; then
 		err_500 "${CERT_ID}"
 	else
 		STATE=2
@@ -120,8 +120,8 @@ if [ "${REQUEST_METHOD}" = "PUT" ]; then
 		err_404
 	else
 		if [ "${STATE}" = "0" ]; then
-			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt"
-			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CA_DIR}/revoke.crl"
+			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt" 2> /dev/null
+			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CA_DIR}/revoke.crl" 2> /dev/null
 			mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
 		fi
 		mv "${DIR}/cert/${CERT_ID}.key" "${DIR}/cert/${CERT_ID}.${NOW}.key"
@@ -137,8 +137,8 @@ if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 		err_404
 	else
 		if [ "${STATE}" = "0" ]; then
-			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt"
-			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CA_DIR}/revoke.crl"
+			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt" 2> /dev/null
+			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CA_DIR}/revoke.crl" 2> /dev/null
 			mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
 		fi
 		mv "${DIR}/cert/${CERT_ID}.key" "${DIR}/cert/${CERT_ID}.${NOW}.key"
