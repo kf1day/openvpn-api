@@ -1,9 +1,8 @@
 #!/bin/sh
 
-NOW="`date +%s`"
-DIR="`echo ${SCRIPT_FILENAME} | sed 's!/webroot/.*!!'`"
-. "${DIR}/.include"
-. "${DIR}/conf/vars.conf"
+NOW=`date +%s`
+DIR=`echo ${SCRIPT_FILENAME} | sed 's!/webroot/.*!!'`
+. "${DIR}/webroot.inc.sh"
 
 if [ -z "${GET_FORMAT}" ]; then
 	F='%s'
@@ -22,7 +21,7 @@ do_list() {
 	local f n
 	printf '{'
 	while read f; do
-		n="`basename $f '.crt'`"
+		n=`basename $f '.crt'`
 		printf '"%s":["%s","%s"],' "$n" `openssl x509 -dates -noout -in $f | cut -d'=' -f2 | date -f- +"$F"`
 	done | sed 's/,$//'
 	printf '}'
@@ -33,11 +32,11 @@ do_export() {
 
 	echo "key-direction 1"
 	echo "<tls-auth>"
-	sed '/^#/d' "${OPENVPN_CA_DIR}/ta.key"
+	sed '/^#/d' "${OPENVPN_TA}"
 	echo "</tls-auth>"
 
 	echo "<ca>"
-	cat "${OPENVPN_CA_DIR}/ca.crt"
+	cat "${OPENVPN_CA}"
 	echo "</ca>"
 
 	echo "<cert>"
@@ -57,8 +56,8 @@ openssl_cnf() {
 	echo "database = ${DIR}/crldb/index.txt"
 	echo "crlnumber = ${DIR}/crldb/number"
 
-	echo "certificate = ${OPENVPN_CA_DIR}/ca.crt"
-	echo "private_key = ${OPENVPN_CA_DIR}/ca.key"
+	echo "certificate = ${OPENVPN_CA}"
+	echo "private_key = ${OPENVPN_CA_KEY}"
 
 	echo "default_md = sha1"
 	echo "default_days = $D"
@@ -76,7 +75,7 @@ if [ -z "${PATH_INFO}" ] || [ "${PATH_INFO}" = "/" ]; then
 fi
 
 
-CERT_ID="`basename "${PATH_INFO}"`"
+CERT_ID=`basename "${PATH_INFO}"`
 if [ -f "${DIR}/cert/${CERT_ID}.key" ]; then
 	if [ -f "${DIR}/cert/${CERT_ID}.crt" ]; then
 		STATE=0
@@ -106,9 +105,9 @@ if [ "${REQUEST_METHOD}" = "POST" ]; then
 		mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
 	fi
 	if [ "${STATE}" = "2" ]; then
-		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA_DIR}/ca.crt" -CAkey "${OPENVPN_CA_DIR}/ca.key" -CAserial "${OPENVPN_CA_DIR}/ca.srl" -out "${DIR}/cert/${CERT_ID}.crt" -days $D -sha512 2> /dev/null
+		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA}" -CAkey "${OPENVPN_CA_KEY}" -CAserial "${OPENVPN_CA_SERIAL}" -out "${DIR}/cert/${CERT_ID}.crt" -days $D -sha512 2> /dev/null
 	else
-		openssl req -new -key "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA_DIR}/ca.crt" -CAkey "${OPENVPN_CA_DIR}/ca.key" -CAserial "${OPENVPN_CA_DIR}/ca.srl" -out "${DIR}/cert/${CERT_ID}.crt" -days $D -sha512 2> /dev/null
+		openssl req -new -key "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA}" -CAkey "${OPENVPN_CA_KEY}" -CAserial "${OPENVPN_CA_SERIAL}" -out "${DIR}/cert/${CERT_ID}.crt" -days $D -sha512 2> /dev/null
 	fi
 	printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
 	printf '["%s","%s"]' `openssl x509 -dates -noout -in "${DIR}/cert/${CERT_ID}.crt" | cut -d'=' -f2 | date -f- +"$F"`
@@ -121,11 +120,11 @@ if [ "${REQUEST_METHOD}" = "PUT" ]; then
 	else
 		if [ "${STATE}" = "0" ]; then
 			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt" 2> /dev/null
-			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CA_DIR}/revoke.crl" 2> /dev/null
+			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CRL}" 2> /dev/null
 			mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
 		fi
 		mv "${DIR}/cert/${CERT_ID}.key" "${DIR}/cert/${CERT_ID}.${NOW}.key"
-		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA_DIR}/ca.crt" -CAkey "${OPENVPN_CA_DIR}/ca.key" -CAserial "${OPENVPN_CA_DIR}/ca.srl" -out "${DIR}/cert/${CERT_ID}.crt" -days $D -sha512 2> /dev/null
+		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/${CERT_ID}.key" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA}" -CAkey "${OPENVPN_CA_KEY}" -CAserial "${OPENVPN_CA_SERIAL}" -out "${DIR}/cert/${CERT_ID}.crt" -days $D -sha512 2> /dev/null
 		printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
 		printf '["%s","%s"]' `openssl x509 -dates -noout -in "${DIR}/cert/${CERT_ID}.crt" | cut -d'=' -f2 | date -f- +"$F"`
 		exit
@@ -138,7 +137,7 @@ if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 	else
 		if [ "${STATE}" = "0" ]; then
 			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt" 2> /dev/null
-			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CA_DIR}/revoke.crl" 2> /dev/null
+			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CRL}" 2> /dev/null
 			mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
 		fi
 		mv "${DIR}/cert/${CERT_ID}.key" "${DIR}/cert/${CERT_ID}.${NOW}.key"

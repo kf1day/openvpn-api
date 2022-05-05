@@ -168,6 +168,17 @@ fetch( '/user.cgi/' )
 		el = document.createElement('a');
 		el.href = '/cert.cgi/' + i;
 		el.innerHTML = 'Renew';
+		el.addEventListener( 'click', e => {
+			if ( window.confirm( 'About to update cert "' + i + '". Confirm?' ) ) {
+				fetch( '/cert.cgi/' + i, { method: 'PUT' } )
+				.then( r => r.json() )
+				.then( r => {
+					setValidity( row, r[1] );
+				} );
+			}
+			e.preventDefault();
+			return false;
+		} );
 		row.cells[2].appendChild( el );
 
 

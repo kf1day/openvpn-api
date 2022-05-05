@@ -24,13 +24,40 @@ err_500() {
 	exit
 }
 
-QUERY_STRING="`echo $QUERY_STRING | sed 's/&/\n/g'`"
-while IFS='=' read key val; do
-	key="`echo $key | sed 's/[^A-Za-z0-9]//g;s/.*/\U&/'`"
-	val="`echo $val | sed 's/%20/ /g;s/%22/"/g'`"
-	eval GET_$key='$val'
-done <<EOF
+. "${DIR}/conf/vars.conf"
+
+
+if [ -f "${OPENVPN_CONFIG}" -a -r "${OPENVPN_CONFIG}" ]; then
+	while IFS=' ' read key val; do
+		case $key in
+			ca)
+			OPENVPN_CA="$val"
+			;;
+			crl-verify)
+			OPENVPN_CRL="$val"
+			;;
+			tls-auth)
+			OPENVPN_TA="$val"
+			;;
+			client-config-dir)
+			OPENVPN_CCD="$val"
+			;;
+			management)
+			OPENVPN_MGMT="$val"
+			;;
+		esac
+	done < "${OPENVPN_CONFIG}"
+fi
+
+if [ -n "${QUERY_STRING}" ]; then
+	QUERY_STRING=`echo $QUERY_STRING | sed 's/&/\n/g'`
+	while IFS='=' read key val; do
+		key=`echo $key | sed 's/[^A-Za-z0-9]//g;s/.*/\U&/'`
+		val=`echo $val | sed 's/%20/ /g;s/%22/"/g'`
+		eval GET_$key='$val'
+	done << EOF
 ${QUERY_STRING}
 EOF
+fi
 
 unset QUERY_STRING key val

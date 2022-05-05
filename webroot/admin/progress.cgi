@@ -2,7 +2,7 @@
 
 NOW="`date +%s`"
 DIR="`echo ${SCRIPT_FILENAME} | sed 's!/webroot/.*!!'`"
-. "${DIR}/.include"
+. "${DIR}/webroot.inc.sh"
 
 if [ -z "${GET_TX}" ] || [ ${GET_TX} -gt 100 ]; then err_400; fi
 if [ -z "${GET_RX}" ] || [ ${GET_RX} -gt 100 ]; then err_400; fi
