@@ -28,7 +28,7 @@ err_500() {
 
 
 if [ -f "${OPENVPN_CONFIG}" -a -r "${OPENVPN_CONFIG}" ]; then
-	while IFS=' ' read key val; do
+	while read key val ext; do
 		case $key in
 			ca)
 			OPENVPN_CA="$val"
@@ -43,7 +43,7 @@ if [ -f "${OPENVPN_CONFIG}" -a -r "${OPENVPN_CONFIG}" ]; then
 			OPENVPN_CCD="$val"
 			;;
 			management)
-			OPENVPN_MGMT="$val"
+			OPENVPN_MGMT="$val $ext"
 			;;
 		esac
 	done < "${OPENVPN_CONFIG}"
