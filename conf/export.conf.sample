@@ -5,14 +5,14 @@ dev tun
 auth-nocache
 remote vpn0.domain.tld 12345
 remote vpn1.domain.tld 13579
-# Uncomment on OpenSSL >= 2.5.0
-#data-ciphers ChaCha20-Poly1305:AES-256-GCM:AES-128-GCM
-cipher AES-256-GCM
+#data-ciphers ChaCha20-Poly1305:AES-256-GCM:AES-256-CBC  # OpenVPN 2.5
+cipher AES-256-CBC
 verb 3
 mute 20
 keepalive 10 120
 persist-key
 persist-tun
 float
+mssfix
 resolv-retry infinite
 nobind

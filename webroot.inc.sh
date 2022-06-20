@@ -60,4 +60,4 @@ ${QUERY_STRING}
 EOF
 fi
 
-unset QUERY_STRING key val
+unset QUERY_STRING key val ext
