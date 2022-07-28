@@ -1,3 +1,4 @@
 /conf/*.conf
 /cert/*
 /crldb/*
+/webroot/test/
