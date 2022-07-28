@@ -1,4 +1,4 @@
-a {
+a,input {
 	color: inherit;
 	font: inherit;
 	text-decoration: none;
@@ -26,6 +26,15 @@ body > div > a {
 body > div > a:hover {
 	color: #fff;
 	background-color: #337fcc;
+}
+body > div > input {
+	background-color: #e5f2ff;
+	border: 2px solid #2966a3;
+	display: inline-block;
+	text-align: left;
+	padding: 3px 5px;
+	outline: none;
+	width: 20%;
 }
 table {
 	table-layout: fixed;

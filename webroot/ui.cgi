@@ -75,7 +75,7 @@ if [ "${PATH_INFO}" = '/list/' ]; then
 </head>
 <body>
 <h2>OpenVPN Admin</h2>
-<div><a id="a0" href="#new">Add new</a></div>
+<div><a id="a0" href="#new">Add new</a><input id="i0" type="text" placeholder="Filter"></div>
 <table id="t0" width="100%">
 <colgroup>
 <col>

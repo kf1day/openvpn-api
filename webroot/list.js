@@ -1,5 +1,6 @@
 var a0 = document.getElementById( 'a0' );
 var t0 = document.getElementById( 't0' );
+var i0 = document.getElementById( 'i0' );
 
 a0.addEventListener( 'click', e => {
 	let v = window.prompt( 'Enter certificate CN', '' );
@@ -12,6 +13,15 @@ a0.addEventListener( 'click', e => {
 	}
 	e.preventDefault();
 	return false;
+} );
+i0.addEventListener( 'input', e => {
+	for ( let i = 0; i < t0.tBodies[0].rows.length; i++ ) {
+		if ( ( e.target.value.length > 1 ) && ( t0.tBodies[0].rows[i].cells[0].innerHTML.indexOf( e.target.value ) === -1 ) )  {
+			t0.tBodies[0].rows[i].style.display = 'none';
+		} else {
+			t0.tBodies[0].rows[i].style.display = 'table-row';
+		}
+	}
 } );
 
 function formatDate( timestamp ) {
