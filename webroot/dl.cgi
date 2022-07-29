@@ -24,17 +24,25 @@ do_export() {
 	echo '</key>'
 }
 
+CERT_ID="${PATH_INFO#/}"
+CERT_ID="${CERT_ID%%/*}"
+CERT_OP="${PATH_INFO#/${CERT_ID}}"
+CERT_OP="${CERT_OP#/}"
 
-if [ -z "${PATH_INFO}" -o "${PATH_INFO}" = '/' ]; then
-	err_405
+if [ -z "${CERT_ID}" ]; then
+	err_400
 fi
 
-
-CERT_ID=`basename "${PATH_INFO}"`
-if [ -f "${DIR}/cert/cur."*".${CERT_ID}" ]; then
+if [ -z "${CERT_OP}" -a -f "${DIR}/cert/cur."*".${CERT_ID}" ]; then
 	printf 'Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
 	do_export "${DIR}/cert/cur."*".${CERT_ID}"
 	exit
+else
+	if [ -f "${DIR}/cert/pem.${CERT_OP}.${CERT_ID}" ]; then
+		printf 'Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
+		do_export "${DIR}/cert/pem.${CERT_OP}.${CERT_ID}"
+		exit
+	fi
 fi
 
-err_404
+err_404 

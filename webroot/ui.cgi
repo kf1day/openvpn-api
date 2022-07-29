@@ -36,6 +36,7 @@ if [ `dirname "${PATH_INFO}"` = '/edit' ]; then
 <table id="t0" width="100%" data-id="${CERT_ID}">
 <colgroup>
 <col width="5%">
+<col>
 <col width="25%">
 <col>
 <col>
@@ -44,6 +45,7 @@ if [ `dirname "${PATH_INFO}"` = '/edit' ]; then
 <thead>
 <tr>
 <th>Cursor</th>
+<th></th>
 <th>Serial</th>
 <th>Start Date</th>
 <th>End Date</th>

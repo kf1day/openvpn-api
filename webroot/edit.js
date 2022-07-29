@@ -29,35 +29,42 @@ function checkBox( e ) {
 function addRow( id, data ) {
 	let el;
 	let row = t0.tBodies[0].insertRow();
-	for ( let j = 0; j < 5; j++ ) row.insertCell();
+	for ( let j = 0; j < 6; j++ ) row.insertCell();
 
 	row.dataset.id = id;
 
 	el = document.createElement( 'input' );
+	el.type = 'checkbox';
 	if ( data.current ) {
 		if ( c0 ) c0.checked = 0;
 		c0 = el;
 		el.checked = 1;
 	}
 	el.addEventListener( 'change', checkBox );
-	el.type = 'checkbox';
-
 	row.cells[0].appendChild( el );
 
-	row.cells[1].innerHTML = data.serial;
+	if ( data.revoked ) {
+		el.disabled = 1;
+		row.className = 'crit';
+		row.cells[5].innerHTML = formatDate( data.revoked );
+	}
+	
+	el = document.createElement( 'a' );
+	el.href = '/dl.cgi/' + t0.dataset.id + '/' + id;
+	el.download = t0.dataset.id + '.ovpn';
+	el.innerHTML = 'Download';
+	row.cells[1].appendChild( el );
 
-	row.cells[2].innerHTML = formatDate( data.startdate );
-	row.cells[3].innerHTML = formatDate( data.enddate );
+	row.cells[2].innerHTML = data.serial;
+	row.cells[3].innerHTML = formatDate( data.startdate );
+	row.cells[4].innerHTML = formatDate( data.enddate );
+
 	if ( data.enddate - now < 0 ) {
 		row.className = 'mask';
 	} else if ( data.enddate - now < 7 * 86400 ) {
 		row.className = 'warn';
 	}
-	if ( data.revoked ) {
-		el.disabled = 1;
-		row.className = 'crit';
-		row.cells[4].innerHTML = formatDate( data.revoked );
-	}
+
 }
 
 
