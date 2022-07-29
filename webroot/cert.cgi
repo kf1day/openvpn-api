@@ -31,8 +31,8 @@ do_opts() {
             printf '},"%s":{"startdate":%d,"enddate":%d' "${a%%.*}" `openssl x509 -dates -noout -in "${DIR}/cert/$c" | cut -d'=' -f2 | date -f- +'%s'`
 			printf ',"serial":"%s"' `openssl x509 -serial -noout -in "${DIR}/cert/$c" | cut -d'=' -f2`
         fi
-    done | sed 's/^},//'
-    printf '}}'
+    done | sed 's/^},//;s/$/}/'
+    printf '}'
 }
 
 openssl_cnf() {
@@ -44,8 +44,8 @@ default_ca = CA
 database = ${DIR}/crldb/index.txt
 crlnumber = ${DIR}/crldb/number
 
-certificate = ${OPENVPN_CA}
-private_key = ${OPENVPN_CA_KEY}
+certificate = ${DIR}/data/ca.crt
+private_key = ${DIR}/data/ca.key
 
 default_md = sha1
 default_days = $D
@@ -100,7 +100,7 @@ if [ "${REQUEST_METHOD}" = 'PUT' ]; then
 fi
 
 if [ "${REQUEST_METHOD}" = "POST" ]; then
-	openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/tmp.${NOW}.${CERT_ID}" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${OPENVPN_CA}" -CAkey "${OPENVPN_CA_KEY}" -CAserial "${OPENVPN_CA_SERIAL}" -out "${DIR}/cert/pem.${NOW}.${CERT_ID}" -days $D -sha512
+	openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/tmp.${NOW}.${CERT_ID}" -subj "${CERT_SUBJECT}/emailAddress=${CERT_ID}@${CERT_DOMAIN}/CN=${CERT_ID}/" -sha512 2> /dev/null | openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -out "${DIR}/cert/pem.${NOW}.${CERT_ID}" -days $D -sha512
 	cat "${DIR}/cert/tmp.${NOW}.${CERT_ID}" >> "${DIR}/cert/pem.${NOW}.${CERT_ID}"
 	rm "${DIR}/cert/tmp.${NOW}.${CERT_ID}"
 	test -f "${DIR}/cert/cur."*".${CERT_ID}" && rm "${DIR}/cert/cur."*".${CERT_ID}"
@@ -115,18 +115,16 @@ if [ "${REQUEST_METHOD}" = "POST" ]; then
 fi
 
 if [ "${REQUEST_METHOD}" = "DELETE" ]; then
-	if [ "${STATE}" = "2" ]; then
-		err_404
-	else
-		if [ "${STATE}" = "0" ]; then
-			openssl_cnf | openssl ca -config "/dev/stdin" -revoke "${DIR}/cert/${CERT_ID}.crt" 2> /dev/null
-			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${OPENVPN_CRL}" 2> /dev/null
-			mv "${DIR}/cert/${CERT_ID}.crt" "${DIR}/cert/${CERT_ID}.${NOW}.bak"
-		fi
-		mv "${DIR}/cert/${CERT_ID}.key" "${DIR}/cert/${CERT_ID}.${NOW}.key"
-		printf "Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-		echo "Revoked successfully"
+	printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
+	if [ -z "${CERT_OP}" ]; then
+		printf '{"code":3,"message":"Index is mandatory"}'
 		exit
+	fi
+	if [ -f "${DIR}/cert/pem.${CERT_OP}.${CERT_ID}" ]; then
+		ln -s "pem.${CERT_OP}.${CERT_ID}" "${DIR}/cert/rev.${NOW}.${CERT_ID}"
+		find "${DIR}/cert/" -type l -name "rev.*" -printf '%l\t%P\n' | sort
+	else
+		printf '{"code":4,"message":"Given index not found"}'
 	fi
 fi
 

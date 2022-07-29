@@ -31,38 +31,14 @@ else
 fi
 
 NOW=`date +'%s'`
-
-if [ -f "${OPENVPN_CONFIG}" -a -r "${OPENVPN_CONFIG}" ]; then
-	while read key val ext; do
-		case $key in
-			ca)
-			OPENVPN_CA="$val"
-			;;
-			crl-verify)
-			OPENVPN_CRL="$val"
-			;;
-			tls-auth)
-			OPENVPN_TA="$val"
-			;;
-			client-config-dir)
-			OPENVPN_CCD="$val"
-			;;
-			management)
-			OPENVPN_MGMT="$val $ext"
-			;;
-		esac
-	done < "${OPENVPN_CONFIG}"
-fi
-
 if [ -n "${QUERY_STRING}" ]; then
-	args=`echo $QUERY_STRING | sed 's/&/\n/g'`
 	while IFS='=' read key val; do
 		key=`echo $key | sed 's/[^A-Za-z0-9]//g;s/.*/\U&/'`
 		val=`echo $val | sed 's/%20/ /g;s/%22/"/g'`
 		eval GET_$key='$val'
 	done << EOF
-$args
+`echo $QUERY_STRING | sed 's/&/\n/g'`
 EOF
 fi
 
-unset args key val ext
+unset key val

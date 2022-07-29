@@ -1,6 +1,5 @@
-OPENVPN_CONFIG="/etc/openvpn/server01.conf"
-OPENVPN_CA_KEY="/etc/openvpn/data/ca.key"
-OPENVPN_CA_SERIAL="/etc/openvpn/data/ca.srl"
+OPENVPN_CCD='/etc/openvpn/ccd/'
+OPENVPN_MGMT='127.0.0.1 1195'
 CERT_KEYSIZE="rsa:2048"
 CERT_SUBJECT="/C=RU/ST=ru/L=Moscow/O=THE LLC"
 CERT_DOMAIN="domain.tld"

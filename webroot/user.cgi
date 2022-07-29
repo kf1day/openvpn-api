@@ -37,6 +37,6 @@ if [ -z "${CERT_ID}" ]; then
 fi
 
 printf "Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-echo status 2 | nc ${OPENVPN_MGMT} -q1 | sed -ne '/^CLIENT_LIST,'"${CERT_ID}"',/{s///;p}' | do_status
+echo status 2 | nc ${OPENVPN_MGMT} -q1 | sed -ne "/^CLIENT_LIST,${CERT_ID},/{s///;p}" | do_status
 
 #err_405
