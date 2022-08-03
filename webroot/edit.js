@@ -18,7 +18,6 @@ function checkBox( e ) {
 	if ( this.checked ) {
 		s +=  '/' + this.parentNode.parentNode.dataset.id
 	}
-	console.log('PUT /cert.cgi/' + s );
 	fetch( '/cert.cgi/' + s, { method: 'PUT' } )
 	.then( r => r.json() )
 	.then( r => {
@@ -43,12 +42,6 @@ function addRow( id, data ) {
 	el.addEventListener( 'change', checkBox );
 	row.cells[0].appendChild( el );
 
-	if ( data.revoked ) {
-		el.disabled = 1;
-		row.className = 'crit';
-		row.cells[5].innerHTML = formatDate( data.revoked );
-	}
-	
 	el = document.createElement( 'a' );
 	el.href = '/dl.cgi/' + t0.dataset.id + '/' + id;
 	el.download = t0.dataset.id + '.ovpn';
@@ -59,12 +52,14 @@ function addRow( id, data ) {
 	row.cells[3].innerHTML = formatDate( data.startdate );
 	row.cells[4].innerHTML = formatDate( data.enddate );
 
-	if ( data.enddate - now < 0 ) {
+	if ( data.revoked ) {
+		row.className = 'crit';
+		row.cells[5].innerHTML = formatDate( data.revoked );
+	} else if ( data.enddate - now < 0 ) {
 		row.className = 'mask';
 	} else if ( data.enddate - now < 7 * 86400 ) {
 		row.className = 'warn';
 	}
-
 }
 
 

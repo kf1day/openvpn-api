@@ -9,6 +9,21 @@ else
 	D="${GET_DAYS}"
 fi
 
+do_join() {
+	local a b c d
+	sort | {
+		while IFS='	' read a b; do
+			if [ "$a" != "$c" ]; then
+				[ -n "$d" ] && echo "$d"
+				c="$a"
+				d="$a"
+			fi
+			[ -n "$b" ] && d="$d\t$b"
+		done
+		echo "$d"
+	}
+}
+
 do_opts() {
 	local a b c
     c=0
@@ -35,14 +50,32 @@ do_opts() {
     printf '}'
 }
 
+do_crl_index() {
+	local a b c d i
+	i=0
+	while read a; do
+		b=${a#rev.}
+		printf '%s\t' ${b%%.*}
+		openssl x509 -noout -nameopt compat -enddate -serial -subject -in "${DIR}/cert/$a" | { while IFS='=' read a b; do printf '%s\t' "$b"; done; printf '\n'; }
+	done | {
+		while IFS='	' read a b c d; do
+			i=$((i+1))
+			a=`date -d@"$a" +'%y%m%d%H%M%SZ'`
+			b=`date -d"$b" +'%y%m%d%H%M%SZ'`
+			printf 'R\t%s\t%s\t%s\t%s\t%s\n' "$b" "$a" "$c" 'unknown' "$d"
+		done > "${DIR}/data/index.txt"
+		printf '00%X\n' "$i" | tail -c3 > "${DIR}/data/number"
+	}
+}
+
 openssl_cnf() {
 	cat << EOF
 [ ca ]
 default_ca = CA
 
 [ CA ]
-database = ${DIR}/crldb/index.txt
-crlnumber = ${DIR}/crldb/number
+database = ${DIR}/data/index.txt
+crlnumber = ${DIR}/data/number
 
 certificate = ${DIR}/data/ca.crt
 private_key = ${DIR}/data/ca.key
@@ -62,9 +95,20 @@ CERT_OP="${CERT_OP#/}"
 if [ -z "${CERT_ID}" ]; then
 	if [ "${REQUEST_METHOD}" = 'GET' ]; then
 		printf 'Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
-
 		printf '{'
-		find "${DIR}/cert/" -name "cur.*" -printf '%P\n' | sort -t'.' -k3 | while IFS='.' read a b c; do printf '"%s":{"enddate":%d},' "$c" "$b"; done | sed 's/,$//'
+		find "${DIR}/cert/" -type l -printf '%l\t%P\n' | do_join | sort -t'.' -k3 | while IFS='	' read a b c; do
+			if [ "${b%%.*}" = 'cur' ]; then
+				a="${b#cur.}"
+				b="${a#*.}"
+				a="${a%%.*}"
+				if [ "${c%%.*}" = 'rev' ]; then
+					c='true'
+				else
+					c='false'
+				fi
+				printf ',"%s":{"enddate":%d,"revoked":%s}' "$b" "$a" "$c"
+			fi
+		done | sed 's/^,//'
 		printf '}'
 		exit
 	fi
@@ -74,9 +118,8 @@ fi
 if [ "${REQUEST_METHOD}" = 'GET' ]; then
 	printf 'Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
 	{
-		find "${DIR}/cert/" -type l -name "rev.*.${CERT_ID}" -printf '%l\t%P\n'
-		find "${DIR}/cert/" -type l -name "cur.*.${CERT_ID}" -printf '%l\t%P\n'
-		find "${DIR}/cert/" -name "pem.*.${CERT_ID}" -printf '%P\n'
+		find "${DIR}/cert/" -type l -name "*.${CERT_ID}" -printf '%l\t%P\n'
+		find "${DIR}/cert/" -type f -name "pem.*.${CERT_ID}" -printf '%P\n'
 	} | sort | do_opts
 	exit
 fi
@@ -121,11 +164,18 @@ if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 		exit
 	fi
 	if [ -f "${DIR}/cert/pem.${CERT_OP}.${CERT_ID}" ]; then
-		ln -s "pem.${CERT_OP}.${CERT_ID}" "${DIR}/cert/rev.${NOW}.${CERT_ID}"
-		find "${DIR}/cert/" -type l -name "rev.*" -printf '%l\t%P\n' | sort
+		if [ `find "$DIR/cert/" -type l -name "rev.*.${CERT_ID}" -printf '%l\n' | grep -c "pem.${CERT_OP}.${CERT_ID}"` = "0" ]; then
+			ln -s "pem.${CERT_OP}.${CERT_ID}" "${DIR}/cert/rev.${NOW}.${CERT_ID}"
+			find "${DIR}/cert/" -type l -name 'rev.*' -printf '%P\n' | sort -t'.' -k2n | do_crl_index
+			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2> /dev/null
+			printf '{"code":0,"message":"Certificate revoked"}' 
+		else
+			printf '{"code":3,"message":"Revokation already done"}'
+		fi
 	else
 		printf '{"code":4,"message":"Given index not found"}'
 	fi
+	exit
 fi
 
 err_405

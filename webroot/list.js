@@ -54,7 +54,9 @@ Promise.all( [ fetch( '/cert.cgi/' ), fetch( '/user.cgi/' ) ] )
 		row.cells[2].appendChild( el );
 
 		row.cells[7].innerHTML = formatDate( r[0][i].enddate );
-		if ( r[0][i].enddate - now < 0 ) {
+		if ( r[0][i].revoked ) {
+			row.className = 'crit';
+		} else if ( r[0][i].enddate - now < 0 ) {
 			row.className = 'mask';
 		} else if ( r[0][i].enddate - now < 7 * 86400 ) {
 			row.className = 'warn';

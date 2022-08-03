@@ -8,11 +8,11 @@ do_export() {
 
 	echo 'key-direction 1'
 	echo '<tls-auth>'
-	sed -n '/^-----BEGIN OpenVPN Static key V1-----$/,/^-----END OpenVPN Static key V1-----$/p' "${OPENVPN_TA}"
+	sed -n '/^-----BEGIN OpenVPN Static key V1-----$/,/^-----END OpenVPN Static key V1-----$/p' "${DIR}/data/ta.key"
 	echo '</tls-auth>'
 
 	echo '<ca>'
-	sed -n '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' "${OPENVPN_CA}"
+	sed -n '/^-----BEGIN CERTIFICATE-----$/,/^-----END CERTIFICATE-----$/p' "${DIR}/data/ca.crt"
 	echo '</ca>'
 
 	echo '<cert>'
