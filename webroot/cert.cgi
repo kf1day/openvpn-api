@@ -143,13 +143,16 @@ if [ "${REQUEST_METHOD}" = 'PUT' ]; then
 fi
 
 if [ "${REQUEST_METHOD}" = "POST" ]; then
-	openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout "${DIR}/cert/tmp.${NOW}.${CERT_CN}" -subj "${CERT_SUBJECT}/emailAddress=${CERT_CN}@${CERT_DOMAIN}/CN=${CERT_CN}/" -sha512 2> /dev/null | openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -out "${DIR}/cert/pem.${NOW}.${CERT_CN}" -days $D -sha512
-	cat "${DIR}/cert/tmp.${NOW}.${CERT_CN}" >> "${DIR}/cert/pem.${NOW}.${CERT_CN}"
-	rm "${DIR}/cert/tmp.${NOW}.${CERT_CN}"
-	test -f "${DIR}/cert/cur."*".${CERT_CN}" && rm "${DIR}/cert/cur."*".${CERT_CN}"
-	e=`openssl x509 -enddate -noout -in "${DIR}/cert/pem.${NOW}.${CERT_CN}" | cut -d'=' -f2 | date -f- +'%s'`
+	e=`{
+		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout /dev/fd/3 -subj "${CERT_SUBJECT}/emailAddress=${CERT_CN}@${CERT_DOMAIN}/CN=${CERT_CN}/" -${CERT_HASH} \
+		| openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -days $D -${CERT_HASH} -out "${DIR}/cert/pem.${NOW}.${CERT_CN}"
+	} 2>/dev/null 3>&1`
 
-	ln -s "pem.${NOW}.${CERT_CN}" "${DIR}/cert/cur.$e.${CERT_CN}"
+	cat << EOF >> "${DIR}/cert/pem.${NOW}.${CERT_CN}"
+$e
+EOF
+
+	e=`openssl x509 -enddate -noout -in "${DIR}/cert/pem.${NOW}.${CERT_CN}" | cut -d'=' -f2 | date -f- +'%s'`
 
 	printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
 
