@@ -9,21 +9,6 @@ else
 	D="${GET_DAYS}"
 fi
 
-do_join() {
-	local a b c d
-	sort | {
-		while IFS='	' read a b; do
-			if [ "$a" != "$c" ]; then
-				[ -n "$d" ] && echo "$d"
-				c="$a"
-				d="$a"
-			fi
-			[ -n "$b" ] && d="$d\t$b"
-		done
-		echo "$d"
-	}
-}
-
 do_crl_index() {
 	local a b c d i
 	i=0
@@ -70,19 +55,8 @@ if [ -z "${CERT_CN}" ]; then
 	if [ "${REQUEST_METHOD}" = 'GET' ]; then
 		printf 'Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
 		printf '{'
-		find "${DIR}/cert/" -type l -printf '%l\t%P\n' | do_join | sort -t'.' -k3 | while IFS='	' read a b c; do
-			if [ "${b%%.*}" = 'cur' ]; then
-				a="${b#cur.}"
-				b="${a#*.}"
-				a="${a%%.*}"
-				if [ "${c%%.*}" = 'rev' ]; then
-					c="${c#rev.}"
-					c="${c%%.*}"
-				else
-					c=0
-				fi
-				printf ',"%s":{"enddate":%d,"revoked":%d}' "$b" "$a" "$c"
-			fi
+		find "${DIR}/cert/" -type l -name 'cur.*' -printf '%l\n' | sort -t'.' -k5 | while IFS='.' read a b c d e; do
+			printf ',"%s":{"startdate":%d,"enddate":%d,"revoked":%d}' "$e" "$c" "$d" "$b"
 		done | sed 's/^,//'
 		printf '}'
 		exit
@@ -91,96 +65,118 @@ if [ -z "${CERT_CN}" ]; then
 fi
 
 if [ "${REQUEST_METHOD}" = 'GET' ]; then
-	if [  `find "${DIR}/cert/" -type f -name "pem.*.${CERT_CN}" | wc -l` = 0 ];  then
+	if [  `find "${DIR}/cert/" -type f -name "*.${CERT_CN}" | wc -l` = 0 ];  then
 		err_404
+	fi
+	if [ -f "${DIR}/cert/cur.${CERT_CN}" ]; then
+		cur=`readlink "${DIR}/cert/cur.${CERT_CN}" | cut -d'.' -f3`
+	else
+		cur=0
 	fi
 	printf 'Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
 	printf '{'
-	{
-		find "${DIR}/cert/" -type l -name "*.${CERT_CN}" -printf '%l\t%P\n'
-		find "${DIR}/cert/" -type f -name "pem.*.${CERT_CN}" -printf '%P\n'
-	} | do_join | while IFS='	' read a b c; do
-		[ "${b%%.*}" = 'cur' -o "${c%%.*}" = 'cur' ] && d='true' || d='false'
-		[ "${c%%.*}" = 'rev' ] && b="$c"
-		if [ "${b%%.*}" = 'rev' ]; then
-			b="${b#rev.}"
-			b="${b%%.*}"
+
+	find "${DIR}/cert/" -type f -name "*.${CERT_CN}" -printf '%f\n' | sort -t'.' -k3n | while IFS='.' read a b c d e; do
+		f=`openssl x509 -noout -serial -in "${DIR}/cert/$a.$b.$c.$d.$e"`
+		f="${f#*=}"
+		if [ "$c" = "$cur" ]; then
+			a='true'
 		else
-			b=0
+			a='false'
 		fi
-		c="${a#pem.}"
-		c="${c%%.*}"
-		openssl x509 -noout -dates -serial -in "${DIR}/cert/$a" | while IFS='=' read a b; do printf '%s\t' "$b"; done
-		printf '%d\t%d\t%s\n' $b $c $d
-	done | while IFS='	' read a b c d e f; do
-		a=`date -d "$a" +'%s'`
-		b=`date -d "$b" +'%s'`
-		printf ',"%s":{"startdate":%d,"enddate":%d,"serial":"%s","current":%s,"revoked":%d}' "$e" "$a" "$b" "$c" "$f" "$d"
+		printf ',"%s":{"startdate":%d,"enddate":%d,"serial":"%s","current":%s,"revoked":%d}' "$c" "$c" "$d" "$f" "$a" "$b"
 	done | sed 's/^,//'
 	printf '}'
 	exit
 fi
 
 if [ "${REQUEST_METHOD}" = 'PUT' ]; then
-	if [  `find "${DIR}/cert/" -type f -name "pem.*.${CERT_CN}" | wc -l` = 0 ];  then
+	if [  `find "${DIR}/cert/" -type f -name "*.${CERT_CN}" | wc -l` = 0 ];  then
 		err_404
 	fi
 	printf 'Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
 	if [ -z "${CERT_ID}" ]; then
-		find "${DIR}/cert/" -type l -name "cur.*.${CERT_CN}" -delete
+		find "${DIR}/cert/" -type l -name "cur.${CERT_CN}" -delete
 		printf '{"code":0,"message":"Cursor cleared"}'
 		exit
 	fi
-	if [ -f "${DIR}/cert/pem.${CERT_ID}.${CERT_CN}" ]; then
-		find "${DIR}/cert/" -type l -name "cur.*.${CERT_CN}" -delete
-		d=`openssl x509 -enddate -noout -in "${DIR}/cert/pem.${CERT_ID}.${CERT_CN}" | cut -d'=' -f2 | date -f- +'%s'`
-		ln -s "pem.${CERT_ID}.${CERT_CN}" "${DIR}/cert/cur.$d.${CERT_CN}"
-		printf '{"code":0,"message":"Cursor is set to given ID"}'
-	else
-		printf '{"code":4,"message":"Given ID not found"}'
-	fi
+	find "${DIR}/cert/" -type f -name "*.${CERT_ID}.*.${CERT_CN}" -printf '%f\n' | {
+		i=0
+		while read a; do
+			i=$((i+1))
+			rm -f "${DIR}/cert/cur.${CERT_CN}"
+			ln -s "$a" "${DIR}/cert/cur.${CERT_CN}"
+		done
+		echo $a
+		if [ $i -eq 1 ]; then
+			printf '{"code":0,"message":"Cursor is set to given ID"}'
+		else
+			printf '{"code":4,"message":"Given ID not found"}'
+		fi
+	}
 	exit
 fi
 
 if [ "${REQUEST_METHOD}" = "POST" ]; then
+	TGT="pem.$$"
 	e=`{
 		openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout /dev/fd/3 -subj "${CERT_SUBJECT}/emailAddress=${CERT_CN}@${CERT_DOMAIN}/CN=${CERT_CN}/" -${CERT_HASH} \
-		| openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -days $D -${CERT_HASH} -out "${DIR}/cert/pem.${NOW}.${CERT_CN}"
+		| openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -days $D -${CERT_HASH} -out "${DIR}/cert/${TGT}"
 	} 2>/dev/null 3>&1`
 
-	cat << EOF >> "${DIR}/cert/pem.${NOW}.${CERT_CN}"
+	cat << EOF >> "${DIR}/cert/${TGT}"
 $e
 EOF
 
-	e=`openssl x509 -enddate -noout -in "${DIR}/cert/pem.${NOW}.${CERT_CN}" | cut -d'=' -f2 | date -f- +'%s'`
+	a=`openssl x509 -noout -dates -serial -in "${DIR}/cert/${TGT}" | cut -d'=' -f2 | date -f- +'%s' | xargs echo`
+	b="${a#* }"
+	a="${a% *}"
+	c=`openssl x509 -noout -serial -in "${DIR}/cert/${TGT}"`
+	c="${c#*=}"
+
+	mv "${DIR}/cert/${TGT}" "${DIR}/cert/pem.0.$a.$b.${CERT_CN}"
 
 	printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
 
-	printf '{"code":0,"message":"Certificate created","id":%d,"startdate":%d,"enddate":%d,"serial":"%s","current":"true"}' "${NOW}" "${NOW}" "$e" `openssl x509 -serial -noout -in "${DIR}/cert/pem.${NOW}.${CERT_CN}" | cut -d'=' -f2`
+	printf '{"code":0,"message":"Certificate created","id":%d,"startdate":%d,"enddate":%d,"serial":"%s"}' "$a" "$a" "$b" "$c"
 	exit
 fi
 
+exit
+
 if [ "${REQUEST_METHOD}" = "DELETE" ]; then
-	if [  `find "${DIR}/cert/" -type f -name "pem.*.${CERT_CN}" | wc -l` = 0 ];  then
+	if [  `find "${DIR}/cert/" -type f -name "*.${CERT_CN}" | wc -l` = 0 ];  then
 		err_404
+	fi	
+	if [ -z "${CERT_ID}" ]; then
+		err_400 'ID is mandatory'
 	fi
 	printf "Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n"
-	if [ -z "${CERT_ID}" ]; then
-		printf '{"code":3,"message":"ID is mandatory"}'
-		exit
-	fi
-	if [ -f "${DIR}/cert/pem.${CERT_ID}.${CERT_CN}" ]; then
-		if [ `find "$DIR/cert/" -type l -name "rev.*.${CERT_CN}" -printf '%l\n' | grep -c "pem.${CERT_ID}.${CERT_CN}"` = "0" ]; then
-			ln -s "pem.${CERT_ID}.${CERT_CN}" "${DIR}/cert/rev.${NOW}.${CERT_CN}"
-			find "${DIR}/cert/" -type l -name 'rev.*' -printf '%P\n' | sort -t'.' -k2n | do_crl_index
+	find "${DIR}/cert/" -type f -name "*.${CERT_ID}.*.${CERT_CN}" -printf '%f\n' | {
+		i=4
+		f=`date +'%s'`
+		while IFS='.' read a b c d e; do
+			if [ "$a" = 'pem' -a "$b" -eq 0 ]; then		
+				mv "${DIR}/cert/$a.$b.$c.$d.$e" "${DIR}/cert/rev.$f.$c.$d.$e"
+				i=0
+			else 
+				i=3
+			fi
+		done
+		case "$i" in
+			1)
+			find "${DIR}/cert/" -type f -name 'rev.*' -printf '%f\n' | sort -t'.' -k2n | do_crl_index
 			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2> /dev/null
-			printf '{"code":0,"message":"Certificate revoked"}' 
-		else
+			printf '{"code":0,"message":"Certificate revoked","revoked":%d}' "$f"
+			;;
+			3)
 			printf '{"code":3,"message":"Revokation already done"}'
-		fi
-	else
-		printf '{"code":4,"message":"Given ID not found"}'
-	fi
+			;;
+			4)
+			printf '{"code":4,"message":"Given ID not found"}'
+			;;
+		esac
+	}
 	exit
 fi
 

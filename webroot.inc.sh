@@ -1,6 +1,6 @@
 err_400() {
 	printf 'Status: 400 Bad Request\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
-	echo 'Bad Request'
+	[ -z "$1" ] && echo 'Bad Request' || echo $@
 	exit
 }
 err_404() {
@@ -30,7 +30,6 @@ else
   err_500 "Config file not found: ${DIR}/conf/vars.conf"
 fi
 
-NOW=`date +'%s'`
 if [ -n "${QUERY_STRING}" ]; then
 	while IFS='=' read key val; do
 		key=`echo $key | sed 's/[^A-Za-z0-9]//g;s/.*/\U&/'`

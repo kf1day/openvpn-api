@@ -24,23 +24,23 @@ do_export() {
 	echo '</key>'
 }
 
-CERT_ID="${PATH_INFO#/}"
-CERT_ID="${CERT_ID%%/*}"
-CERT_OP="${PATH_INFO#/${CERT_ID}}"
-CERT_OP="${CERT_OP#/}"
+CERT_CN="${PATH_INFO#/}"
+CERT_CN="${CERT_CN%%/*}"
+CERT_ID="${PATH_INFO#/${CERT_CN}}"
+CERT_ID="${CERT_ID#/}"
 
-if [ -z "${CERT_ID}" ]; then
+if [ -z "${CERT_CN}" ]; then
 	err_400
 fi
 
-if [ -z "${CERT_OP}" -a -f "${DIR}/cert/cur."*".${CERT_ID}" ]; then
+if [ -z "${CERT_ID}" -a -f "${DIR}/cert/cur.${CERT_CN}" ]; then
 	printf 'Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
-	do_export "${DIR}/cert/cur."*".${CERT_ID}"
+	do_export "${DIR}/cert/cur.${CERT_CN}"
 	exit
 else
-	if [ -f "${DIR}/cert/pem.${CERT_OP}.${CERT_ID}" ]; then
+	if [ -f "${DIR}/cert/pem.${CERT_ID}."*".${CERT_CN}" ]; then
 		printf 'Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
-		do_export "${DIR}/cert/pem.${CERT_OP}.${CERT_ID}"
+		do_export "${DIR}/cert/pem.${CERT_ID}."*".${CERT_CN}"
 		exit
 	fi
 fi
