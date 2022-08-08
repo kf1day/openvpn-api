@@ -152,8 +152,6 @@ EOF
 	exit
 fi
 
-exit
-
 if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 	if [  `find "${DIR}/cert/" -type f -name "*.${CERT_CN}" | wc -l` = 0 ];  then
 		err_404
@@ -166,7 +164,10 @@ if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 		i=4
 		f=`date +'%s'`
 		while IFS='.' read a b c d e; do
-			if [ "$a" = 'pem' -a "$b" -eq 0 ]; then		
+			if [ "$a" = 'pem' -a "$b" -eq 0 ]; then
+				if [ -L "${DIR}/cert/cur.$e" -a `readlink "${DIR}/cert/cur.$e"` = "$a.$b.$c.$d.$e" ]; then
+					ln -fs "rev.$f.$c.$d.$e" "${DIR}/cert/cur.$e"
+				fi
 				mv "${DIR}/cert/$a.$b.$c.$d.$e" "${DIR}/cert/rev.$f.$c.$d.$e"
 				i=0
 			else 
@@ -174,7 +175,7 @@ if [ "${REQUEST_METHOD}" = "DELETE" ]; then
 			fi
 		done
 		case "$i" in
-			1)
+			0)
 			find "${DIR}/cert/" -type f -name 'rev.*' -printf '%f\n' | sort -t'.' -k2n | do_crl_index
 			openssl_cnf | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2> /dev/null
 			printf '{"code":0,"message":"Certificate revoked","revoked":%d}' "$f"
