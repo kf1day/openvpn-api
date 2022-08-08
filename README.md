@@ -1,4 +1,12 @@
+# POSIX shell-scripted backend/UI for OpenVPN server instance
+![openvpn-api](https://user-images.githubusercontent.com/13162764/183392585-377578ab-b68e-4056-980a-507db1fa0f3a.png)
+
+## Summary
+OpenVPN-API is a set of pure posix-compatible shell scripts which provides management of client configs and certificates via CGI interface. Development is currently in alpha-stage
+
+
 ## Sample config
+
 
 ### nginx + scgid 
 ```nginx
