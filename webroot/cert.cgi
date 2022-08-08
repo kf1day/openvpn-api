@@ -61,6 +61,16 @@ if [ -z "${CERT_CN}" ]; then
 		printf '}'
 		exit
 	fi
+	if [ "${REQUEST_METHOD}" = 'POST' ]; then
+		printf 'Status: 200 OK\r\nContent-Type: application/json; charset=utf-8\r\n\r\n'
+		printf '{'
+		find "${DIR}/cert/" -type f -printf '%f\n' | sort -t'.' -k3nr | sort -ust'.' -k5 | while IFS='.' read a b c d e; do
+			printf ',"%s":{"startdate":%d,"enddate":%d,"revoked":%d}' "$e" "$c" "$d" "$b"
+		done | sed 's/^,//'
+		printf '}'
+		exit
+
+	fi
 	err_405
 fi
 

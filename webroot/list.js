@@ -29,7 +29,7 @@ function formatDate( timestamp ) {
 	return [ new String( val.getFullYear() ), new String( val.getMonth() + 101 ).substring( 1 ), new String( val.getDate() + 100 ).substring( 1 ) ].join( '-' );
 }
 
-Promise.all( [ fetch( '/cert.cgi/' ), fetch( '/user.cgi/' ) ] )
+Promise.all( [ fetch( '/cert.cgi/', { method: ( location.href.indexOf( 'listall' ) === -1 ) ? 'GET' : 'POST' } ), fetch( '/user.cgi/' ) ] )
 .then( r => Promise.all( [ r[0].json(), r[1].json() ] ) )
 .then( r => {
 	let el;

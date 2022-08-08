@@ -63,7 +63,7 @@ EOF
 fi
 
 
-if [ "${PATH_INFO}" = '/list/' ]; then
+if [ "${PATH_INFO%/}" = '/list' -o "${PATH_INFO%/}" = '/listall' ]; then
 	printf 'Status: 200 OK\r\nContent-Type: text/html\r\n\r\n'
 	cat << EOF
 <!DOCTYPE html>
