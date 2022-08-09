@@ -30,6 +30,10 @@ else
   err_500 "Config file not found: ${DIR}/conf/vars.conf"
 fi
 
+if [ -n "${PATH_INFO}" ]; then
+	PATH_INFO=`echo ${PATH_INFO} | sed 's/[^A-Za-z0-9\/]//g'`
+fi
+
 if [ -n "${QUERY_STRING}" ]; then
 	while IFS='=' read key val; do
 		key=`echo $key | sed 's/[^A-Za-z0-9]//g;s/.*/\U&/'`
