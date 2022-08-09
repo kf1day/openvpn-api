@@ -10,13 +10,13 @@ function formatDate( timestamp ) {
 }
 
 function checkBox( e ) {
-	let s = t0.dataset.id;
+	let s = t0.dataset.id + '/';
 	if ( c0 && c0 != this ) {
 		c0.checked = 0;
 	}
 	c0 = this;
 	if ( this.checked ) {
-		s +=  '/' + this.parentNode.parentNode.dataset.id
+		s += this.parentNode.parentNode.dataset.id
 	}
 	fetch( '/cert.cgi/' + s, { method: 'PUT' } )
 	.then( r => r.json() )
@@ -65,7 +65,7 @@ function addRow( id, data ) {
 
 a1.addEventListener( 'click', e => {
 	if ( window.confirm( 'Issue new certificate?' ) ) {
-		fetch( '/cert.cgi/' + t0.dataset.id, { method: 'POST' } )
+		fetch( '/cert.cgi/' + t0.dataset.id + '/', { method: 'POST' } )
 		.then( r => r.json() )
 		.then( r => {
 			if ( r.code === 0 ) {
