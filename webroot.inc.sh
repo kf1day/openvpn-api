@@ -25,13 +25,13 @@ err_500() {
 }
 
 if [ -f "${DIR}/conf/vars.conf" -a -r "${DIR}/conf/vars.conf" ]; then
-  . "${DIR}/conf/vars.conf"
-else 
-  err_500 "Config file not found: ${DIR}/conf/vars.conf"
+	. "${DIR}/conf/vars.conf"
+else
+	err_500 "Config file not found: ${DIR}/conf/vars.conf"
 fi
 
 if [ -n "${PATH_INFO}" ]; then
-	PATH_INFO=`echo ${PATH_INFO} | sed 's/[^A-Za-z0-9\/]//g'`
+	PATH_INFO=`echo ${PATH_INFO} | sed 's/[^+-\.\_A-Za-z0-9\/]//g'`
 fi
 
 if [ -n "${QUERY_STRING}" ]; then

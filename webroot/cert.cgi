@@ -123,14 +123,14 @@ else
 				e=`ln -fs "$a" "${DIR}/cert/cur.${CERT_CN}" 2>&1`
 				if [ $? -eq 0 ]; then
 					printf '{"code":0,"message":"item checked"}'
-				else 
+				else
 					printf '{"code":2,"message":"%s"}' "$e"
 				fi
 				break
 			done
 			if [ $i -eq 4 ]; then
 				printf '{"code":4,"message":"item not found"}'
-			fi	
+			fi
 		fi
 		;;
 	'POST')
@@ -146,7 +146,7 @@ else
 						fi
 						mv "${DIR}/cert/$a.$b.$c.$d.$e" "${DIR}/cert/pem.0.$c.$d.$e"
 						i=0
-					else 
+					else
 						i=3
 					fi
 				done
@@ -172,7 +172,7 @@ else
 			| openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -days $D -${CERT_HASH} -out "${DIR}/cert/${TGT}"
 		} 2>/dev/null 3>&1`
 
-		
+
 cat << EOF >> "${DIR}/cert/${TGT}"
 $e
 EOF
@@ -184,6 +184,7 @@ EOF
 		c="${c#*=}"
 
 		mv "${DIR}/cert/${TGT}" "${DIR}/cert/pem.0.$a.$b.${CERT_CN}"
+		ln -fs "pem.0.$a.$b.${CERT_CN}" "${DIR}/cert/cur.${CERT_CN}"
 
 		printf '{"code":0,"message":"certificate created","id":%d,"startdate":%d,"enddate":%d,"serial":"%s"}' "$a" "$a" "$b" "$c"
 		;;
@@ -202,7 +203,7 @@ EOF
 					fi
 					mv "${DIR}/cert/$a.$b.$c.$d.$e" "${DIR}/cert/rev.$f.$c.$d.$e"
 					i=0
-				else 
+				else
 					i=3
 				fi
 			done
