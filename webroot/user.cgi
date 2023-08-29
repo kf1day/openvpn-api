@@ -8,7 +8,9 @@ do_list() {
 	local cn remote ip ip6 rx tx a tt b id peer
 	printf '{'
 	while IFS=',' read cn remote ip ip6 rx tx a tt b id peer; do
-		printf ',"%s":{"ip":"%s","remote":"%s","time":%d,"tx":%d,"rx":%d}' "$cn" "$ip" "$remote" "$tt" "$tx" "$rx"
+		if [ -n "$peer" ]; then
+			printf ',"%s":{"ip":"%s","remote":"%s","time":%d,"tx":%d,"rx":%d}' "$cn" "$ip" "$remote" "$tt" "$tx" "$rx" 2>/dev/null
+		fi
 	done | sed 's/^,//'
 	printf '}'
 }

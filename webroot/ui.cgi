@@ -17,6 +17,12 @@ EOF
 	exit
 fi
 
+if [ "${PATH_INFO}" = '/leases' ]; then
+	printf 'Status: 200 OK\r\nContent-Type: text/plain\r\n\r\n'
+	sed 's/\(.*\),\(.*\),.*/\2\t\1/' /etc/openvpn/ipp-s1.txt
+	exit
+fi
+
 if [ `dirname "${PATH_INFO}"` = '/edit' ]; then
 	CERT_ID="${PATH_INFO##*/}"
 	printf 'Status: 200 OK\r\nContent-Type: text/html\r\n\r\n'
@@ -37,6 +43,7 @@ if [ `dirname "${PATH_INFO}"` = '/edit' ]; then
 <colgroup>
 <col width="5%">
 <col>
+<col>
 <col width="25%">
 <col>
 <col>
@@ -45,6 +52,7 @@ if [ `dirname "${PATH_INFO}"` = '/edit' ]; then
 <thead>
 <tr>
 <th>Cursor</th>
+<th></th>
 <th></th>
 <th>Serial</th>
 <th>Start Date</th>

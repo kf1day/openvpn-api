@@ -68,14 +68,14 @@ if [ -z "${CERT_CN}" ]; then
 			printf '{'
 			find "${DIR}/cert/" -type l -name 'cur.*' -printf '%l\n' | sort -t'.' -k5 | do_list
 			printf '}'
-		} 2>/dev/null
+		} 2>> "${DIR}/data/error.log"
 		;;
 	'POST')
 		head_json; {
 			printf '{'
 			find "${DIR}/cert/" -type f -printf '%f\n' | sort -t'.' -k3nr | sort -ust'.' -k5 | do_list
 			printf '}'
-		} 2>/dev/null
+		} 2>> "${DIR}/data/error.log"
 		;;
 	*)
 		err_405
@@ -100,7 +100,7 @@ else
 				printf ',"%s":{"startdate":%d,"enddate":%d,"serial":"%s","current":%s,"revoked":%d}' "$c" "$c" "$d" "$f" "$a" "$b"
 			done | sed 's/^,//'
 			printf '}'
-		} 2>/dev/null
+		} 2>> "${DIR}/data/error.log"
 		;;
 	'PUT')
 		[ `find "${DIR}/cert/" -type f -name "*.${CERT_CN}" | wc -l` -eq 0 ] && err_404
@@ -153,7 +153,7 @@ else
 				case "$i" in
 					0)
 					find "${DIR}/cert/" -type f -name 'rev.*' -printf '%f\n' | sort -t'.' -k2n | do_crl_index
-					do_config | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2> /dev/null
+					do_config | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2>> "${DIR}/data/error.log"
 					printf '{"code":0,"message":"item unrevoked"}'
 					;;
 					3)
@@ -170,7 +170,7 @@ else
 		e=`{
 			openssl req -new -newkey "${CERT_KEYSIZE}" -nodes -keyout /dev/fd/3 -subj "${CERT_SUBJECT}/emailAddress=${CERT_CN}@${CERT_DOMAIN}/CN=${CERT_CN}/" -${CERT_HASH} \
 			| openssl x509 -req -CA "${DIR}/data/ca.crt" -CAkey "${DIR}/data/ca.key" -CAserial "${DIR}/data/serial" -days $D -${CERT_HASH} -out "${DIR}/cert/${TGT}"
-		} 2>/dev/null 3>&1`
+		} 2>> "${DIR}/data/error.log" 3>&1`
 
 
 cat << EOF >> "${DIR}/cert/${TGT}"
@@ -210,7 +210,7 @@ EOF
 			case "$i" in
 				0)
 				find "${DIR}/cert/" -type f -name 'rev.*' -printf '%f\n' | sort -t'.' -k2n | do_crl_index
-				do_config | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2> /dev/null
+				do_config | openssl ca -config "/dev/stdin" -gencrl -out "${DIR}/data/index.crl" 2>> "${DIR}/data/error.log"
 				printf '{"code":0,"message":"item revoked","revoked":%d}' "$f"
 				;;
 				3)

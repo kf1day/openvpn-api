@@ -25,10 +25,29 @@ function checkBox( e ) {
 	} );
 }
 
+function certRevoke( e ) {
+	if ( window.confirm( 'Are you sure to revoke this certificate?' ) ) {
+		fetch( this.href, { method: 'DELETE' } )
+		.then( r => { location.reload() } );
+	}
+	e.preventDefault();
+	return false;
+}
+
+function certUnrevoke( e ) {
+	if ( window.confirm( 'Are you sure to un-revoke this certificate?' ) ) {
+		fetch( this.href, { method: 'POST' } )
+		.then( r => { location.reload() } );
+	}
+	e.preventDefault();
+	return false;
+}
+
+
 function addRow( id, data ) {
 	let el;
 	let row = t0.tBodies[0].insertRow();
-	for ( let j = 0; j < 6; j++ ) row.insertCell();
+	for ( let j = 0; j < 7; j++ ) row.insertCell();
 
 	row.dataset.id = id;
 
@@ -48,13 +67,24 @@ function addRow( id, data ) {
 	el.innerHTML = 'Download';
 	row.cells[1].appendChild( el );
 
-	row.cells[2].innerHTML = data.serial;
-	row.cells[3].innerHTML = formatDate( data.startdate );
-	row.cells[4].innerHTML = formatDate( data.enddate );
+	el = document.createElement( 'a' );
+	el.href = '/cert.cgi/' + t0.dataset.id + '/' + id;
+	if ( data.revoked ) {
+		el.innerHTML = 'Unrevoke';
+		el.addEventListener( 'click', certUnrevoke );
+	} else {
+		el.innerHTML = 'Revoke';
+		el.addEventListener( 'click', certRevoke );
+	}
+	row.cells[2].appendChild( el );
+
+	row.cells[3].innerHTML = data.serial;
+	row.cells[4].innerHTML = formatDate( data.startdate );
+	row.cells[5].innerHTML = formatDate( data.enddate );
 
 	if ( data.revoked ) {
 		row.className = 'crit';
-		row.cells[5].innerHTML = formatDate( data.revoked );
+		row.cells[6].innerHTML = formatDate( data.revoked );
 	} else if ( data.enddate - now < 0 ) {
 		row.className = 'mask';
 	} else if ( data.enddate - now < 7 * 86400 ) {
