@@ -60,11 +60,25 @@ function addRow( id, data ) {
 	}
 	el.addEventListener( 'change', checkBox );
 	row.cells[0].appendChild( el );
+	
+	/*el = document.createElement( 'span' );
+	el.innerHTML = 'Download: ';
+	row.cells[1].appendChild( el );*/
 
 	el = document.createElement( 'a' );
 	el.href = '/dl.cgi/' + t0.dataset.id + '/' + id;
 	el.download = t0.dataset.id + '.ovpn';
-	el.innerHTML = 'Download';
+	el.innerHTML = 'OVPN';
+	row.cells[1].appendChild( el );
+
+	el = document.createElement( 'span' );
+	el.innerHTML = ' | ';
+	row.cells[1].appendChild( el );
+
+	el = document.createElement( 'a' );
+	el.href = '/dl.cgi/' + t0.dataset.id + '/' + id + '?type=txt';
+	el.download = t0.dataset.id + '.txt';
+	el.innerHTML = 'TXT';
 	row.cells[1].appendChild( el );
 
 	el = document.createElement( 'a' );

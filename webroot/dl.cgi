@@ -35,12 +35,20 @@ fi
 
 if [ -z "${CERT_ID}" -a -f "${DIR}/cert/cur.${CERT_CN}" ]; then
 	printf 'Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
-	do_export "${DIR}/cert/cur.${CERT_CN}"
+	if [ "${GET_TYPE}" = 'txt' ]; then
+		do_export "${DIR}/cert/cur.${CERT_CN}" | sed 's/$/\r/'
+	else
+		do_export "${DIR}/cert/cur.${CERT_CN}"
+	fi
 	exit
 else
 	if [ -f "${DIR}/cert/pem.0.${CERT_ID}."*".${CERT_CN}" ]; then
 		printf 'Status: 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n'
-		do_export "${DIR}/cert/pem.0.${CERT_ID}."*".${CERT_CN}"
+		if [ "${GET_TYPE}" = 'txt' ]; then
+			do_export "${DIR}/cert/pem.0.${CERT_ID}."*".${CERT_CN}" | sed 's/$/\r/'
+		else
+			do_export "${DIR}/cert/pem.0.${CERT_ID}."*".${CERT_CN}"
+		fi
 		exit
 	fi
 fi
