@@ -36,7 +36,7 @@ if [ -n "$1" -a -f "$1" ]; then
 	exit
 fi
 
-tar -C"${DIR}" -cz . -f "${DIR%cert}bakup."`date +'%s'`'.tgz'
+tar -C"${DIR}" -cz . -f "${DIR%cert}backup."`date +'%s'`'.tgz'
 
 ls -1 "${DIR}/"*'.key' | while read f; do
     mod=`openssl rsa -modulus -noout -in "$f" | sha256sum | cut -d' ' -f1`
@@ -51,8 +51,8 @@ ls -1 "${DIR}/"*'.crt' | while read f; do
         echo 'Mark as CURRENT'
         datex=`openssl x509 -startdate -noout -in "$f" | sed 's/^notBefore=//' | date -f- +'%s'`
         datez=`openssl x509 -enddate -noout -in "$f" | sed 's/^notAfter=//' | date -f- +'%s'`
-        cat "$f" "${WRK}/mod.$mod" > "${DIR}/pem.$datex.$id"
-        ln -s "pem.$datex.$id" "${DIR}/cur.$datez.$id"
+        cat "$f" "${WRK}/mod.$mod" > "${DIR}/pem.0.$datex.$datez.$id"
+        ln -s "pem.0.$datex.$datez.$id" "${DIR}/cur.$id"
     fi
 done
 
@@ -62,16 +62,16 @@ ls -1 "${DIR}/"*'.bak' | while read f; do
         id=`basename "$f" '.bak' | sed 's/\.[0-9]\+$//'`
         echo "$id"
         datex=`openssl x509 -startdate -noout -in "$f" | sed 's/^notBefore=//' | date -f- +'%s'`
-        cat "$f" "${WRK}/mod.$mod" > "${DIR}/pem.$datex.$id"
+        datez=`openssl x509 -enddate -noout -in "$f" | sed 's/^notAfter=//' | date -f- +'%s'`
+        cat "$f" "${WRK}/mod.$mod" > "${DIR}/pem.0.$datex.$datez.$id"
         r="${f%.bak}.key"
         if [ -r "$r" ]; then
             rp=`echo $r | sed 's/.*\.\([0-9]\+\)\.key$/\1/'`
             echo 'Mark as REVOKED'
-            ln -s "pem.$datex.$id" "${DIR}/rev.$rp.$id"
+            mv "${DIR}/pem.0.$datex.$datez.$id" "${DIR}/rev.$rp.$datex.$datez.$id"
         fi
     fi
 done
 
 rm -rf "${WRK}"
 rm "${DIR}/"*'.key' "${DIR}/"*'.crt' "${DIR}/"*'.bak'
-
